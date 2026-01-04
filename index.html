@@ -1,37 +1,117 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Chat Đơn Giản</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook Interface Clone</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; }
-        #log { height: 300px; border: 1px solid #ccc; overflow-y: scroll; margin-bottom: 10px; padding: 10px; background: #f9f9f9; }
-        input { width: 80%; padding: 10px; }
-        button { padding: 10px; cursor: pointer; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Helvetica, Arial, sans-serif; }
+        body { background-color: #f0f2f5; color: #1c1e21; }
+
+        /* Thanh điều hướng */
+        nav { 
+            background-color: #ffffff; height: 56px; display: flex; 
+            justify-content: space-between; align-items: center; 
+            padding: 0 16px; position: fixed; width: 100%; top: 0; z-index: 100;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .nav-left h1 { color: #0866ff; font-size: 40px; letter-spacing: -2px; }
+        .nav-center { display: flex; gap: 40px; font-size: 24px; color: #65676b; }
+        .nav-right { display: flex; align-items: center; gap: 10px; }
+        .profile-circle { width: 40px; height: 40px; background: #ddd; border-radius: 50%; }
+
+        /* Bố cục chính */
+        .main-container { display: flex; margin-top: 56px; justify-content: space-between; padding: 10px; }
+        
+        /* Cột trái & phải */
+        .sidebar { width: 25%; position: sticky; top: 66px; height: calc(100vh - 66px); padding: 10px; display: none; }
+        @media (min-width: 900px) { .sidebar { display: block; } }
+
+        /* Dòng thời gian (Cột giữa) */
+        .feed { width: 100%; max-width: 680px; display: flex; flex-direction: column; gap: 20px; align-items: center; }
+
+        /* Ô đăng bài */
+        .create-post { 
+            background: white; width: 100%; max-width: 500px; padding: 15px; 
+            border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .post-input { 
+            background: #f0f2f5; padding: 10px; border-radius: 20px; 
+            margin-top: 10px; color: #65676b; cursor: pointer;
+        }
+
+        /* Bài viết mẫu */
+        .post { 
+            background: white; width: 100%; max-width: 500px; 
+            border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); overflow: hidden;
+        }
+        .post-header { padding: 12px; display: flex; align-items: center; gap: 10px; }
+        .post-img { width: 100%; height: 300px; background: #ddd; }
+        .post-footer { padding: 12px; border-top: 1px solid #ebedf0; display: flex; justify-content: space-around; color: #65676b; font-weight: 600; }
     </style>
 </head>
 <body>
-    <h3>Phòng Chat Thử Nghiệm</h3>
-    <div id="log"></div>
-    <input type="text" id="msg" placeholder="Nhập gì đó rồi nhấn Gửi...">
-    <button onclick="send()">Gửi</button>
 
-    <script>
-        // Tự động thông báo nếu code chạy được
-        const log = document.getElementById('log');
-        log.innerHTML += "<div>> Hệ thống đang sẵn sàng...</div>";
+    <nav>
+        <div class="nav-left"><h1>facebook</h1></div>
+        <div class="nav-center">
+            <span>🏠</span> <span>📺</span> <span>🏪</span> <span>👥</span>
+        </div>
+        <div class="nav-right">
+            <div class="profile-circle"></div>
+        </div>
+    </nav>
 
-        function send() {
-            const val = document.getElementById('msg').value;
-            if(val) {
-                const div = document.createElement('div');
-                div.innerText = "Bạn: " + val;
-                log.appendChild(div);
-                document.getElementById('msg').value = '';
-                // Lưu ý: Đây là bản test giao diện, để nhắn tin real-time 
-                // cần kết nối mạng ổn định với PubNub ở code trên.
-            }
-        }
-    </script>
+    <div class="main-container">
+        <div class="sidebar">
+            <p style="margin-bottom: 20px;">👤 <b>Tên của bạn</b></p>
+            <p>👥 Bạn bè</p>
+            <p>🕒 Kỷ niệm</p>
+            <p>📌 Đã lưu</p>
+            <p>🏳️ Trang</p>
+        </div>
+
+        <div class="feed">
+            <div class="create-post">
+                <div style="display: flex; gap: 10px;">
+                    <div class="profile-circle"></div>
+                    <div class="post-input" style="flex: 1;">Bạn đang nghĩ gì thế?</div>
+                </div>
+            </div>
+
+            <div class="post">
+                <div class="post-header">
+                    <div class="profile-circle"></div>
+                    <div><b>Người dùng ẩn danh</b><br><small>5 phút trước</small></div>
+                </div>
+                <div style="padding: 0 12px 12px;">Hôm nay trời đẹp quá mọi người ơi! ☀️</div>
+                <div class="post-img"></div>
+                <div class="post-footer">
+                    <span>👍 Thích</span> <span>💬 Bình luận</span> <span>↪️ Chia sẻ</span>
+                </div>
+            </div>
+
+            <div class="post">
+                <div class="post-header">
+                    <div class="profile-circle"></div>
+                    <div><b>Gemini AI</b><br><small>1 giờ trước</small></div>
+                </div>
+                <div style="padding: 0 12px 12px;">Chào mừng bạn đến với giao diện Facebook clone!</div>
+                <div class="post-img" style="background: #4267B2;"></div>
+                <div class="post-footer">
+                    <span>👍 Thích</span> <span>💬 Bình luận</span> <span>↪️ Chia sẻ</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <p style="color: #65676b; font-weight: 600;">Người liên hệ</p>
+            <br>
+            <p>🟢 Bạn học A</p>
+            <p>🟢 Đồng nghiệp B</p>
+            <p>⚪ Người quen C</p>
+        </div>
+    </div>
+
 </body>
 </html>
