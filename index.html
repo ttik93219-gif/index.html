@@ -3,66 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Facebook Chat Real-time</title>
-    <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.7.2.2.min.js"></script>
+    <title>Facebook Messenger</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         body { background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .fb-messenger { width: 100%; max-width: 400px; height: 90vh; background: white; display: flex; flex-direction: column; box-shadow: 0 12px 28px rgba(0,0,0,0.1); border-radius: 10px; overflow: hidden; }
-        .header { background: #0084ff; color: white; padding: 15px; text-align: center; font-weight: bold; font-size: 18px; }
-        #chat-window { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; background: #fff; }
-        .msg { padding: 8px 12px; border-radius: 18px; font-size: 14px; max-width: 75%; word-wrap: break-word; }
+        .chat-app { width: 100%; max-width: 450px; height: 95vh; background: white; display: flex; flex-direction: column; box-shadow: 0 12px 28px rgba(0,0,0,0.12); border-radius: 10px; overflow: hidden; }
+        .header { background: #fff; border-bottom: 1px solid #dbdbdb; padding: 15px; display: flex; align-items: center; gap: 10px; }
+        .dot { width: 12px; height: 12px; background: #31a24c; border-radius: 50%; border: 2px solid white; }
+        #chat-window { flex: 1; overflow-y: auto; padding: 15px; background: #fff; display: flex; flex-direction: column; gap: 8px; }
+        .msg { padding: 8px 12px; border-radius: 18px; font-size: 15px; max-width: 75%; word-wrap: break-word; line-height: 1.4; }
         .mine { background: #0084ff; color: white; align-self: flex-end; }
         .theirs { background: #e4e6eb; color: black; align-self: flex-start; }
-        .input-area { padding: 10px; border-top: 1px solid #ddd; display: flex; gap: 5px; }
-        input { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #ddd; outline: none; background: #f0f2f5; }
-        button { background: none; border: none; color: #0084ff; font-weight: bold; cursor: pointer; }
+        .footer { padding: 10px; border-top: 1px solid #ddd; display: flex; align-items: center; gap: 10px; }
+        input { flex: 1; padding: 10px 15px; border-radius: 20px; border: none; background: #f0f2f5; outline: none; }
+        button { background: none; border: none; color: #0084ff; font-weight: bold; cursor: pointer; font-size: 16px; }
     </style>
 </head>
 <body>
 
-<div class="fb-messenger">
-    <div class="header">Messenger</div>
+<div class="chat-app">
+    <div class="header">
+        <div class="dot"></div>
+        <strong>Messenger - Nhóm Chat</strong>
+    </div>
     <div id="chat-window"></div>
-    <div class="input-area">
-        <input type="text" id="msg-input" placeholder="Aa" onkeypress="if(event.key==='Enter') send()">
+    <div class="footer">
+        <input type="text" id="input" placeholder="Aa" onkeypress="if(event.key==='Enter') send()">
         <button onclick="send()">Gửi</button>
     </div>
 </div>
 
 <script>
-    const myID = 'User_' + Math.floor(Math.random() * 9999);
-    const pubnub = new PubNub({
-        publishKey: 'pub-c-69f82631-6b4d-48d6-99c5-6531853d463e',
-        subscribeKey: 'sub-c-529dfa86-7780-496a-b2f5-21d3f9e9df37',
-        userId: myID
-    });
+    // Kết nối đến một server chat miễn phí công cộng (Cực dễ kết nối)
+    const socket = io("https://socket-io-chat.now.sh");
+    const chatWindow = document.getElementById('chat-window');
 
-    pubnub.addListener({
-        message: (m) => {
-            const isMine = m.publisher === myID;
-            appendMsg(m.message, isMine);
-        }
+    // Lắng nghe tin nhắn mới từ server
+    socket.on('new message', (data) => {
+        appendMsg(data.message, false);
     });
-
-    pubnub.subscribe({ channels: ['fb-global-room'] });
 
     function send() {
-        const input = document.getElementById('msg-input');
-        if(input.value.trim()) {
-            pubnub.publish({ channel: 'fb-global-room', message: input.value });
+        const input = document.getElementById('input');
+        const message = input.value.trim();
+        if (message) {
+            // Gửi tin nhắn lên server
+            socket.emit('new message', message);
+            // Hiển thị tin nhắn của chính mình
+            appendMsg(message, true);
             input.value = '';
         }
     }
 
     function appendMsg(text, isMine) {
-        const win = document.getElementById('chat-window');
         const div = document.createElement('div');
         div.className = 'msg ' + (isMine ? 'mine' : 'theirs');
         div.innerText = text;
-        win.appendChild(div);
-        win.scrollTop = win.scrollHeight;
+        chatWindow.appendChild(div);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
     }
+
+    // Thông báo khi đã kết nối thành công
+    socket.on('connect', () => {
+        const div = document.createElement('div');
+        div.style = "text-align:center; font-size:12px; color:gray; margin:10px;";
+        div.innerText = "Hệ thống: Đã kết nối trực tuyến!";
+        chatWindow.appendChild(div);
+    });
 </script>
 </body>
 </html>
