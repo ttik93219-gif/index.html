@@ -3,95 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Facebook Messenger Clone</title>
-    <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
+    <title>Facebook Chat Real-time</title>
+    <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.7.2.2.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Helvetica, Arial, sans-serif; }
-        body { background-color: #f0f2f5; }
-
-        /* Thanh điều hướng xanh */
-        .navbar { 
-            background-color: #0866ff; height: 56px; display: flex; 
-            align-items: center; padding: 0 20px; color: white;
-            position: fixed; width: 100%; top: 0; z-index: 100;
-        }
-
-        /* Khung Chat */
-        .chat-container {
-            max-width: 500px; margin: 70px auto 20px; background: white;
-            height: 85vh; border-radius: 8px; display: flex;
-            flex-direction: column; box-shadow: 0 12px 28px rgba(0,0,0,0.12);
-        }
-
-        .chat-header { padding: 15px; border-bottom: 1px solid #ddd; font-weight: bold; display: flex; align-items: center; gap: 10px; }
-        .status-dot { width: 10px; height: 10px; background: #31a24c; border-radius: 50%; }
-
-        #message-list { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; background: #fff; }
-        
-        /* Bong bóng chat kiểu Facebook */
-        .msg { max-width: 70%; padding: 8px 12px; border-radius: 18px; font-size: 15px; line-height: 1.4; }
-        .mine { align-self: flex-end; background-color: #0084ff; color: white; }
-        .theirs { align-self: flex-start; background-color: #e4e6eb; color: black; }
-
-        /* Ô nhập liệu */
-        .chat-input-area { padding: 10px; display: flex; align-items: center; gap: 10px; border-top: 1px solid #ddd; }
-        input { flex: 1; padding: 10px 15px; border: none; background: #f0f2f5; border-radius: 20px; outline: none; }
-        button { background: none; border: none; color: #0084ff; font-weight: bold; cursor: pointer; font-size: 16px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .fb-messenger { width: 100%; max-width: 400px; height: 90vh; background: white; display: flex; flex-direction: column; box-shadow: 0 12px 28px rgba(0,0,0,0.1); border-radius: 10px; overflow: hidden; }
+        .header { background: #0084ff; color: white; padding: 15px; text-align: center; font-weight: bold; font-size: 18px; }
+        #chat-window { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; background: #fff; }
+        .msg { padding: 8px 12px; border-radius: 18px; font-size: 14px; max-width: 75%; word-wrap: break-word; }
+        .mine { background: #0084ff; color: white; align-self: flex-end; }
+        .theirs { background: #e4e6eb; color: black; align-self: flex-start; }
+        .input-area { padding: 10px; border-top: 1px solid #ddd; display: flex; gap: 5px; }
+        input { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #ddd; outline: none; background: #f0f2f5; }
+        button { background: none; border: none; color: #0084ff; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div class="navbar">
-        <h2>facebook</h2>
+<div class="fb-messenger">
+    <div class="header">Messenger</div>
+    <div id="chat-window"></div>
+    <div class="input-area">
+        <input type="text" id="msg-input" placeholder="Aa" onkeypress="if(event.key==='Enter') send()">
+        <button onclick="send()">Gửi</button>
     </div>
+</div>
 
-    <div class="chat-container">
-        <div class="chat-header">
-            <div class="status-dot"></div>
-            <span>Phòng chat trực tuyến</span>
-        </div>
+<script>
+    const myID = 'User_' + Math.floor(Math.random() * 9999);
+    const pubnub = new PubNub({
+        publishKey: 'pub-c-69f82631-6b4d-48d6-99c5-6531853d463e',
+        subscribeKey: 'sub-c-529dfa86-7780-496a-b2f5-21d3f9e9df37',
+        userId: myID
+    });
 
-        <div id="message-list">
-            <div class="msg theirs">Chào bạn! Hãy gửi link này cho bạn bè để bắt đầu chat nhé.</div>
-        </div>
-
-        <div class="chat-input-area">
-            <input type="text" id="text-input" placeholder="Aa" onkeypress="if(event.key==='Enter') send()">
-            <button onclick="send()">Gửi</button>
-        </div>
-    </div>
-
-    <script>
-        // Tạo ID ngẫu nhiên cho mỗi người vào web
-        const myId = 'User_' + Math.floor(Math.random() * 1000);
-        
-        // Kết nối hệ thống Real-time
-        const ably = new Ably.Realtime('87k02g.0F_6Pw:v309pT76_6N6u_25Lh_2zS-r6O_2v8_2y_2w_2e_2t');
-        const channel = ably.channels.get('facebook-messenger-room');
-
-        // Nhận tin nhắn từ người khác
-        channel.subscribe('chat', (msg) => {
-            const isMine = msg.clientId === myId;
-            displayMessage(msg.data, isMine);
-        });
-
-        // Gửi tin nhắn
-        function send() {
-            const input = document.getElementById('text-input');
-            if (input.value.trim() !== "") {
-                channel.publish({ name: 'chat', data: input.value, clientId: myId });
-                input.value = "";
-            }
+    pubnub.addListener({
+        message: (m) => {
+            const isMine = m.publisher === myID;
+            appendMsg(m.message, isMine);
         }
+    });
 
-        function displayMessage(text, isMine) {
-            const list = document.getElementById('message-list');
-            const div = document.createElement('div');
-            div.className = 'msg ' + (isMine ? 'mine' : 'theirs');
-            div.innerText = text;
-            list.appendChild(div);
-            list.scrollTop = list.scrollHeight;
+    pubnub.subscribe({ channels: ['fb-global-room'] });
+
+    function send() {
+        const input = document.getElementById('msg-input');
+        if(input.value.trim()) {
+            pubnub.publish({ channel: 'fb-global-room', message: input.value });
+            input.value = '';
         }
-    </script>
+    }
+
+    function appendMsg(text, isMine) {
+        const win = document.getElementById('chat-window');
+        const div = document.createElement('div');
+        div.className = 'msg ' + (isMine ? 'mine' : 'theirs');
+        div.innerText = text;
+        win.appendChild(div);
+        win.scrollTop = win.scrollHeight;
+    }
+</script>
 </body>
 </html>
